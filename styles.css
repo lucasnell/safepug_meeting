@@ -1,0 +1,40 @@
+.reveal pre code {
+  font-size: 1em;
+}
+
+.reveal .state-background {
+  background: white;
+} 
+.reveal {
+  color: black;
+}
+
+.reveal strong {
+    color: black;
+}
+
+.smaller {
+  font-size: smaller !important;
+}
+
+/* Removes hyphenating in titles: */
+.reveal h1, .reveal h2, .reveal h3 {
+  word-wrap: normal;
+  -moz-hyphens: none;
+  -epub-hyphens: none;
+}
+
+/*
+Use to center an image like this:
+<div class="midcenter" style="margin-left:-300px; margin-top:-300px;">
+<img src="flowchart_600x600.png"></img>
+</div>
+The margins are to make it truly centered
+*/
+.midcenter {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+}
+
+
