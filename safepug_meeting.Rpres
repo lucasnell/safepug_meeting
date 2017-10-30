@@ -1,0 +1,269 @@
+SAFEPUG
+===============
+author: Lucas Nell
+date: 1 Nov 2017
+css: styles.css
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+```
+
+<div>
+    <p style="float: left;">
+        <strong>S</strong>imulating <br>
+        <strong>A</strong>llele <br>
+        <strong>F</strong>requencies from <br>
+        <strong>E</strong>xperimental <br>
+        <strong>P</strong>opulations <br>
+        <strong>U</strong>sing <br>
+        <strong>G</strong>BS <br>
+    </p>
+    <div class="safepug_icon"></div>
+</div>
+
+
+SAFEPUG Motivation
+===============
+
+### Experimental evolution:
+
+1. Inoculate cages with 50 each of the same 10 aphid clones
+2. Allow aphids to compete in cages for ∼6 months
+3. _Estimate abundances of the clonal lines_
+
+SAFEPUG Motivation (cont.)
+===============
+
+- Use genotyping by sequencing (GBS) on pools instead of microsatellites on individuals
+    - Lower prep time ---> just send samples to sequencing center
+- __Ultimate question:__ Can pooled GBS give reliable estimates of clone abundance?
+- Can also use simulations to determine if method can be extended
+
+
+What is GBS?
+=================
+
+- Next-gen sequencing to genotype individuals / populations
+- Reduces genome complexity using restriction enzymes 
+    - Less sequencing and no reference genome needed
+- Low information
+- Low effort, low cost
+
+
+How does GBS work?
+==============
+left: 60%
+
+<img src="img/gbs.svg" width=500px>
+
+***
+ 
+- Coverage can differ wildly between sites
+- Multiple sources for differences
+
+
+Step 1: Digest and multiplex
+==================
+
+<img src="img/gbs_digest_multiplex.svg">
+
+### Sources of variability:
+- Mutations in enzyme binding sites
+- Different amounts of starting DNA
+
+
+
+Step 2: PCR
+==================
+
+<img src="img/gbs_pcr.svg" width=700px>
+
+### Sources of variability:
+- Stochastic PCR process
+- Fragment length and GC content
+
+
+
+Step 3: Sequence
+==================
+left: 60%
+
+<img src="img/gbs_sequence.svg" width=600px>
+
+***
+
+### Sources of variability:
+- Sampling of fragments onto flowcells
+- Fragment length
+
+
+
+Getting to know the SAFEPUG
+===============
+type: section
+
+```{r load_safepug, echo = FALSE, eval = FALSE}
+suppressMessages(devtools::load_all('../safepug'))
+```
+
+1. What can it do?
+2. Limitations?
+
+Reading and representing genomes
+==============
+
+#### Reading a genome from file
+```{r load_fasta, eval = FALSE}
+aphid <- dna_set$new(fasta_file = 'fasta_folder/aphid_genome.fa')
+```
+
+#### Genome class
+```{r genome_class, eval = FALSE}
+aphid
+```
+
+
+
+
+Altering genomes
+============
+
+#### Digesting
+```{r digest}
+digest(aphid, 'ApeKI', n_cores = 4)
+# the SimRAD package took 3.5 minutes; this takes ~2 sec (~100x faster)
+```
+
+#### Filtering for scaffolds above a threshold
+```{r filter_scaffs}
+aphid$filter(min_size = 100e3)
+```
+
+#### Filtering for largest scaffolds giving `p` total proportion of genomic sequence
+```{r filter_scaffs_p}
+aphid$filter(prop = 0.5)
+```
+
+#### Merging scaffolds
+```{r merge_scaffs}
+aphid$merge(n_merged_scaffs = 4)
+```
+
+
+Adding variants
+============
+
+The two main pieces of information I want for the calculations are...
+
+1. The proportion of segregating sites
+2. Some measure of how different individuals are at segregating sites
+
+I have the following estimates of diversity:
+
+- Watterson's estimator of polymorphic sites ($\theta_w$)
+- Nei and Li's measure of nucleotide diversity ($\theta_{\pi}$)
+
+
+Proportion of segregating sites
+=============
+
+Watterson's estimator of polymorphic sites ($\theta_w$):
+
+$$
+\theta_w = \frac{ K }{ \sum_{i=1}^{n-1} \frac{1}{i} }
+$$
+
+- $K$ is the proportion of segregating sites
+- $n$ is the number of individuals sampled
+
+So the proportion of segregating sites is simply...
+
+$$
+K = \theta_w \sum_{i=1}^{n-1} \frac{1}{i}
+$$
+
+
+
+Diversity at segregating sites
+============
+
+Nei and Li's measure of nucleotide diversity ($\theta_{\pi}$):
+
+$$
+\theta_\pi = \sum_{ij} x_i x_j \pi_{ij}
+$$
+
+- $x_i$ and $x_j$: frequencies of the $i$<sup>th</sup> and $j$<sup>th</sup> unique
+  sequences respectively
+- $\pi_{ij}$: proportion of divergent sequence between the $i$<sup>th</sup> and
+  $j$<sup>th</sup> unique sequences
+
+
+Diversity at segregating sites #2
+============
+
+If I assume that all $n$ lines will be unique sequences...
+
+$$
+\theta_\pi = \sum_{ij} x_i x_j \pi_{ij} \\
+\theta_\pi = \frac{1}{n^2} \sum_{ij} \pi_{ij}
+$$
+
+
+Diversity at segregating sites #3
+============
+
+Number of total pairwise combinations between $n$ sequences is 
+${n \choose 2}$
+
+The mean proportional sequence divergence between any two sequences ($\bar{\pi}$) is...
+
+$$
+\bar{\pi} = \frac{ \sum_{ij} \pi_{ij} }{ {n \choose 2} } \\
+\sum_{ij} \pi_{ij} = {n \choose 2} \bar{\pi}
+$$
+
+
+Diversity at segregating sites #4
+============
+
+Now I combine two earlier equations
+
+$$
+\theta_\pi = \frac{1}{n^2} {n \choose 2} \bar{\pi}
+$$
+
+Solving for $\bar{\pi}$ yields the following:
+
+$$
+\bar{\pi} = \frac{\theta_\pi n^2}{{n \choose 2}}
+$$
+
+
+Diversity at segregating sites #5
+============
+left: 50%
+
+<div class="footer" style="margin-top:-150px;top:80%;">
+$$
+\theta_\pi = \frac{1}{n^2} {n \choose 2} \bar{\pi} \\
+\bar{\pi} = \frac{\theta_\pi n^2}{{n \choose 2}}
+$$
+</div>
+
+
+$$
+\theta_\pi = \sum_{ij} x_i x_j \pi_{ij} \\
+\theta_\pi = \frac{1}{n^2} \sum_{ij} \pi_{ij}
+$$
+
+***
+
+$$
+\bar{\pi} = \frac{ \sum_{ij} \pi_{ij} }{ {n \choose 2} } \\
+\sum_{ij} \pi_{ij} = {n \choose 2} \bar{\pi}
+$$
+
+
+
+

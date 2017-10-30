@@ -7,11 +7,19 @@
 } 
 .reveal {
   color: black;
-}
-
+  font-family: "Helvetica Neue", Helvetica, sans-serif;
+} 
 .reveal strong {
     color: black;
+} 
+.reveal sup {
+    font-size: 80%;
 }
+
+.reveal section[data-state='section'] strong {
+    color: #25679E;
+}
+
 
 .smaller {
   font-size: smaller !important;
@@ -38,3 +46,19 @@ The margins are to make it truly centered
 }
 
 
+
+.safepug_icon { 
+    background: url(https://i.imgur.com/jb14nCz.jpg) 50% 50% no-repeat; /* 50% 50% centers image in div */
+    width: 400px;
+    height: 400px;
+    float: right;
+}
+
+
+.footer {
+    color: black; 
+    position: fixed; 
+    top: 90%;
+    text-align:center; 
+    width:100%;
+}
